@@ -5,6 +5,7 @@ namespace App\Services\Chat;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ChatService
 {
@@ -12,7 +13,6 @@ class ChatService
     private const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
     private const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
     private const SYSTEM_PROMPT = 'You are a helpful mental wellness assistant. Be supportive, empathetic, and practical. Avoid harmful or extreme advice.';
-    private const FALLBACK_RESPONSE = 'I\'m here to support you. Could you please try again? I want to make sure I give you the best response possible.';
 
     public function createThread(int $userId): array
     {
@@ -50,12 +50,23 @@ class ChatService
             $contextMessages = $this->fetchContextMessages($threadId, excludeId: $userMessage->id);
 
             // 3. Generate AI response
-            $aiText = $this->generateAIResponse($contextMessages, $message);
+            $aiResponse = $this->generateAIResponse($contextMessages, $message);
+
+            if (! $aiResponse['success']) {
+                return [
+                    'success'   => false,
+                    'message'   => $aiResponse['message'],
+                    'data'      => [
+                        'user_message' => $userMessage,
+                    ],
+                    'http_code' => $aiResponse['http_code'],
+                ];
+            }
 
             // 4. Save AI response
             $aiMessage = ChatMessage::create([
                 'thread_id' => $threadId,
-                'message'   => $aiText,
+                'message'   => $aiResponse['message'],
                 'sender'    => 'ai',
             ]);
 
@@ -105,15 +116,27 @@ class ChatService
     /**
      * Send context + new message to Claude API and return the AI response text.
      */
-    public function generateAIResponse(array $contextMessages, string $newUserMessage): string
+    public function generateAIResponse(array $contextMessages, string $newUserMessage): array
     {
+        $apiKey = config('services.claude.api_key');
+
+        if (! is_string($apiKey) || trim($apiKey) === '') {
+            Log::error('Claude API key is missing');
+
+            return [
+                'success'   => false,
+                'message'   => 'Chat service is not configured right now.',
+                'http_code' => 503,
+            ];
+        }
+
         try {
             $messages = $contextMessages;
             $messages[] = ['role' => 'user', 'content' => $newUserMessage];
 
             $response = Http::timeout(30)
                 ->withHeaders([
-                    'x-api-key'         => config('services.claude.api_key'),
+                    'x-api-key'         => $apiKey,
                     'anthropic-version' => '2023-06-01',
                     'content-type'      => 'application/json',
                 ])
@@ -127,16 +150,52 @@ class ChatService
             if ($response->successful()) {
                 $body = $response->json();
 
-                return $body['content'][0]['text'] ?? self::FALLBACK_RESPONSE;
+                $text = $body['content'][0]['text'] ?? null;
+
+                if (is_string($text) && trim($text) !== '') {
+                    return [
+                        'success'   => true,
+                        'message'   => $text,
+                        'http_code' => 200,
+                    ];
+                }
+
+                Log::error('Claude API returned an empty response body', ['body' => $body]);
+
+                return [
+                    'success'   => false,
+                    'message'   => 'Chat service returned an empty response. Please try again.',
+                    'http_code' => 502,
+                ];
             }
 
-            report(new \RuntimeException('Claude API error: ' . $response->status() . ' ' . $response->body()));
+            $status = $response->status();
+            $body = $response->json();
+            $providerMessage = $body['error']['message'] ?? null;
 
-            return self::FALLBACK_RESPONSE;
+            report(new \RuntimeException('Claude API error: ' . $status . ' ' . $response->body()));
+
+            if ($status === 400 && is_string($providerMessage) && str_contains(strtolower($providerMessage), 'credit balance is too low')) {
+                return [
+                    'success'   => false,
+                    'message'   => 'Chat service is unavailable because the Anthropic account has no remaining credits.',
+                    'http_code' => 503,
+                ];
+            }
+
+            return [
+                'success'   => false,
+                'message'   => 'Chat service is temporarily unavailable. Please try again later.',
+                'http_code' => 502,
+            ];
         } catch (\Throwable $e) {
             report($e);
 
-            return self::FALLBACK_RESPONSE;
+            return [
+                'success'   => false,
+                'message'   => 'Chat service is temporarily unavailable. Please try again later.',
+                'http_code' => 502,
+            ];
         }
     }
 
