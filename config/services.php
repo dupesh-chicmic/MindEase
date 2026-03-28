@@ -39,4 +39,13 @@ return [
         'verify_ssl' => filter_var(env('GEMINI_HTTP_VERIFY', 'true'), FILTER_VALIDATE_BOOLEAN),
     ],
 
+    'claude' => [
+        'api_key' => env('CLAUDE_API_KEY'),
+    ],
+
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials_path' => env('GOOGLE_APPLICATION_CREDENTIALS'),
+    ],
+
 ];
