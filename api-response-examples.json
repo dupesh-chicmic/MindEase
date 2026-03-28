@@ -1,0 +1,51 @@
+{
+  "endpoint": "GET /api/v1/suggestions?mood=sad",
+  "headers": {
+    "Authorization": "Bearer YOUR_TOKEN_HERE",
+    "Accept": "application/json"
+  },
+  "success_example": {
+    "success": true,
+    "message": "AI suggestion generated",
+    "data": {
+      "activity": "5 min balcony break + chill playlist on 🎧",
+      "quote": "Tu akela nahi hai, bas thoda rest deserve karta hai 💜",
+      "extra": "Why did the chai go to therapy? Kyunki usmein bohot dipression tha 😂☕"
+    }
+  },
+  "ai_fallback_when_api_fails": {
+    "note": "If Google Gemini fails, key is missing, or JSON is invalid, the API still returns success true with the static fallback triple.",
+    "example": {
+      "success": true,
+      "message": "AI suggestion generated",
+      "data": {
+        "activity": "Thoda walk le le fresh air mein 🚶‍♂️",
+        "quote": "Yeh phase temporary hai, tu strong hai 💪",
+        "extra": "Smile kar thoda 🙂"
+      }
+    }
+  },
+  "validation_error_example": {
+    "success": false,
+    "message": "The mood field is required.",
+    "data": {}
+  },
+  "unauthenticated_example": {
+    "success": false,
+    "message": "Unauthenticated.",
+    "data": {}
+  },
+  "curl": "curl --location \"http://localhost:8000/api/v1/suggestions?mood=sad\" --header \"Authorization: Bearer TOKEN\" --header \"Accept: application/json\"",
+  "postman": {
+    "method": "GET",
+    "url": "http://localhost:8000/api/v1/suggestions",
+    "query_params": { "mood": "happy" },
+    "auth": "Bearer Token"
+  },
+  "android_fields": {
+    "activity": "data.activity",
+    "quote": "data.quote",
+    "extra": "data.extra"
+  },
+  "create_bearer_token_tinker": "php artisan tinker\n>>> $u = \\App\\Models\\User::where('email', 'test@example.com')->first();\n>>> $u->createToken('android')->plainTextToken;"
+}

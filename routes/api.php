@@ -1,14 +1,15 @@
 <?php
 
-use App\Http\Controllers\API\Auth\AuthController;
-use App\Http\Controllers\API\Auth\ForgotPasswordController;
-use App\Http\Controllers\API\Auth\ProfileController;
-use App\Http\Controllers\API\CalendarController;
-use App\Http\Controllers\API\Chat\ChatController;
-use App\Http\Controllers\API\DashboardController;
-use App\Http\Controllers\API\Fcm\FcmController;
-use App\Http\Controllers\API\Insight\InsightController;
-use App\Http\Controllers\API\MoodController;
+use App\Http\Controllers\Api\V1\SuggestionController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\ForgotPasswordController;
+use App\Http\Controllers\Api\Auth\ProfileController;
+use App\Http\Controllers\Api\CalendarController;
+use App\Http\Controllers\Api\Chat\ChatController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\Fcm\FcmController;
+use App\Http\Controllers\Api\Insight\InsightController;
+use App\Http\Controllers\Api\MoodController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/auth')->group(function () {
@@ -38,6 +39,7 @@ Route::prefix('v1')->middleware('session.token')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('insights', [InsightController::class, 'index']);
     Route::post('mood/log', [MoodController::class, 'log']);
+    Route::get('suggestions', [SuggestionController::class, 'index']);
 
     Route::prefix('fcm')->group(function () {
         Route::post('token', [FcmController::class, 'saveToken']);

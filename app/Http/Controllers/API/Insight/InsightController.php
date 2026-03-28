@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Insight;
+namespace App\Http\Controllers\Api\Insight;
 
 use App\Http\Controllers\Controller;
 use App\Services\Insight\InsightService;

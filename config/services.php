@@ -31,12 +31,20 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'timeout' => (int) env('GEMINI_TIMEOUT', 45),
+        'base_url' => env('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta'),
+        'verify_ssl' => filter_var(env('GEMINI_HTTP_VERIFY', 'true'), FILTER_VALIDATE_BOOLEAN),
+    ],
+
     'claude' => [
         'api_key' => env('CLAUDE_API_KEY'),
     ],
 
     'firebase' => [
-        'project_id'       => env('FIREBASE_PROJECT_ID'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
         'credentials_path' => env('GOOGLE_APPLICATION_CREDENTIALS'),
     ],
 

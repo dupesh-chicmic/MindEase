@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Fcm;
+namespace App\Http\Controllers\Api\Fcm;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Fcm\DeleteFcmTokenRequest;

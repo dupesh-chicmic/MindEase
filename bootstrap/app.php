@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\SessionTokenMiddleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,14 +21,27 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (ValidationException $e, Request $request) {
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/*')) {
-                $message = collect($e->errors())->flatten()->first() ?? 'Validation failed';
-
                 return response()->json([
                     'success' => false,
-                    'message' => $message,
-                ], 422);
+                    'message' => 'Unauthenticated.',
+                    'data' => new \stdClass(),
+                ], 401);
             }
+
+            return null;
+        });
+
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->validator->errors()->first() ?? 'Validation failed.',
+                    'data' => new \stdClass(),
+                ], $e->status);
+            }
+
+            return null;
         });
     })->create();

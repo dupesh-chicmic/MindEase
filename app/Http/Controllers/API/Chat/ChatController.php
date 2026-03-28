@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Chat;
+namespace App\Http\Controllers\Api\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Chat\GetHistoryRequest;
