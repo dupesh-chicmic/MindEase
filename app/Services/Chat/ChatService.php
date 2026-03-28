@@ -4,18 +4,16 @@ namespace App\Services\Chat;
 
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use App\Services\AI\AiManager;
 
 class ChatService
 {
     private const CONTEXT_LIMIT = 10;
-
-    private const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-
-    private const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
-
     private const SYSTEM_PROMPT = 'You are a helpful mental wellness assistant. Be supportive, empathetic, and practical. Avoid harmful or extreme advice.';
+
+    public function __construct(
+        protected AiManager $ai
+    ) {}
 
     public function createThread(int $userId): array
     {
@@ -42,31 +40,26 @@ class ChatService
     public function handleSendMessage(int $userId, int $threadId, string $message): array
     {
         try {
-            // 1. Save user message
             $userMessage = ChatMessage::create([
                 'thread_id' => $threadId,
                 'message' => $message,
                 'sender' => 'user',
             ]);
 
-            // 2. Fetch context (last N messages before this one)
             $contextMessages = $this->fetchContextMessages($threadId, excludeId: $userMessage->id);
-
-            // 3. Generate AI response
             $aiResponse = $this->generateAIResponse($contextMessages, $message);
 
             if (! $aiResponse['success']) {
                 return [
-                    'success'   => false,
-                    'message'   => $aiResponse['message'],
-                    'data'      => [
+                    'success' => false,
+                    'message' => $aiResponse['message'],
+                    'data' => [
                         'user_message' => $userMessage,
                     ],
                     'http_code' => $aiResponse['http_code'],
                 ];
             }
 
-            // 4. Save AI response
             $aiMessage = ChatMessage::create([
                 'thread_id' => $threadId,
                 'message' => $aiResponse['message'],
@@ -94,8 +87,6 @@ class ChatService
     }
 
     /**
-     * Fetch the last N messages from the thread for context, optionally excluding a specific message ID.
-     *
      * @return array<int, array{role: string, content: string}>
      */
     public function fetchContextMessages(int $threadId, ?int $excludeId = null): array
@@ -117,89 +108,28 @@ class ChatService
     }
 
     /**
-     * Send context + new message to Claude API and return the AI response text.
+     * @param  array<int, array{role: string, content: string}>  $contextMessages
+     * @return array{success: bool, text?: string, message?: string, http_code: int}
      */
     public function generateAIResponse(array $contextMessages, string $newUserMessage): array
     {
-        $apiKey = config('services.claude.api_key');
+        $messages = $contextMessages;
+        $messages[] = ['role' => 'user', 'content' => $newUserMessage];
 
-        if (! is_string($apiKey) || trim($apiKey) === '') {
-            Log::error('Claude API key is missing');
+        $response = $this->ai->generateResponse($messages, [
+            'system' => self::SYSTEM_PROMPT,
+            'max_tokens' => 1024,
+        ]);
 
-            return [
-                'success'   => false,
-                'message'   => 'Chat service is not configured right now.',
-                'http_code' => 503,
-            ];
+        if (! $response['success']) {
+            return $response;
         }
 
-        try {
-            $messages = $contextMessages;
-            $messages[] = ['role' => 'user', 'content' => $newUserMessage];
-
-            $response = Http::timeout(30)
-                ->withHeaders([
-                    'x-api-key' => $apiKey,
-                    'anthropic-version' => '2023-06-01',
-                    'content-type' => 'application/json',
-                ])
-                ->post(self::CLAUDE_API_URL, [
-                    'model' => self::CLAUDE_MODEL,
-                    'max_tokens' => 1024,
-                    'system' => self::SYSTEM_PROMPT,
-                    'messages' => $messages,
-                ]);
-
-            if ($response->successful()) {
-                $body = $response->json();
-
-                $text = $body['content'][0]['text'] ?? null;
-
-                if (is_string($text) && trim($text) !== '') {
-                    return [
-                        'success'   => true,
-                        'message'   => $text,
-                        'http_code' => 200,
-                    ];
-                }
-
-                Log::error('Claude API returned an empty response body', ['body' => $body]);
-
-                return [
-                    'success'   => false,
-                    'message'   => 'Chat service returned an empty response. Please try again.',
-                    'http_code' => 502,
-                ];
-            }
-
-            $status = $response->status();
-            $errorBody = $response->json();
-            $providerMessage = is_array($errorBody) ? ($errorBody['error']['message'] ?? null) : null;
-
-            report(new \RuntimeException('Claude API error: ' . $status . ' ' . $response->body()));
-
-            if ($status === 400 && is_string($providerMessage) && str_contains(strtolower($providerMessage), 'credit balance is too low')) {
-                return [
-                    'success'   => false,
-                    'message'   => 'Chat service is unavailable because the Anthropic account has no remaining credits.',
-                    'http_code' => 503,
-                ];
-            }
-
-            return [
-                'success'   => false,
-                'message'   => 'Chat service is temporarily unavailable. Please try again later.',
-                'http_code' => 502,
-            ];
-        } catch (\Throwable $e) {
-            report($e);
-
-            return [
-                'success'   => false,
-                'message'   => 'Chat service is temporarily unavailable. Please try again later.',
-                'http_code' => 502,
-            ];
-        }
+        return [
+            'success' => true,
+            'message' => $response['text'] ?? '',
+            'http_code' => $response['http_code'],
+        ];
     }
 
     public function getHistory(int $userId, int $threadId): array
