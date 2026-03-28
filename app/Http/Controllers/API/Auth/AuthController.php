@@ -88,8 +88,8 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $result['message'],
-            'data' => $result['data']->resolve(),
+            'message' => $result['message'] ?? 'OK',
+            'data' => $result['data'],
         ], $result['http_code'] ?? 200);
     }
 }
