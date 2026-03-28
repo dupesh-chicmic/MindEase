@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'claude' => [
+        'api_key' => env('CLAUDE_API_KEY'),
+    ],
+
 ];
