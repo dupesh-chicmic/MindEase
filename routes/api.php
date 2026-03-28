@@ -8,6 +8,7 @@ use App\Http\Controllers\API\Chat\ChatController;
 use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\Fcm\FcmController;
 use App\Http\Controllers\API\Insight\InsightController;
+use App\Http\Controllers\Api\V1\MoodController as V1UserMoodController;
 use App\Http\Controllers\API\MoodController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,4 +44,8 @@ Route::prefix('v1')->middleware('session.token')->group(function () {
         Route::post('token', [FcmController::class, 'saveToken']);
         Route::delete('token', [FcmController::class, 'deleteToken']);
     });
+});
+
+Route::middleware('auth:api')->group(function () {
+    Route::patch('v1/mood', [V1UserMoodController::class, 'updateMood']);
 });
