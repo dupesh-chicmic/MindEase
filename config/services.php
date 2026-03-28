@@ -31,4 +31,12 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'timeout' => (int) env('GEMINI_TIMEOUT', 45),
+        'base_url' => env('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta'),
+        'verify_ssl' => filter_var(env('GEMINI_HTTP_VERIFY', 'true'), FILTER_VALIDATE_BOOLEAN),
+    ],
+
 ];
