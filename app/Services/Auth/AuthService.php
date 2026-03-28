@@ -14,7 +14,7 @@ class AuthService
     ) {}
 
     /**
-     * @return array{success: bool, message?: string, token?: string, http_code?: int}
+     * @return array{success: bool, message?: string, token?: string, user?: UserResource, http_code?: int}
      */
     public function register(array $data): array
     {
@@ -41,6 +41,7 @@ class AuthService
                 'success' => true,
                 'message' => 'User registered successfully',
                 'token' => $token,
+                'user' => new UserResource($user->fresh()),
                 'http_code' => 201,
             ];
         } catch (\Throwable $e) {
@@ -55,7 +56,7 @@ class AuthService
     }
 
     /**
-     * @return array{success: bool, message?: string, token?: string, http_code?: int}
+     * @return array{success: bool, message?: string, token?: string, user?: UserResource, http_code?: int}
      */
     public function login(string $email, string $password): array
     {
@@ -84,6 +85,7 @@ class AuthService
                 'success' => true,
                 'message' => 'Login successful',
                 'token' => $token,
+                'user' => new UserResource($user->fresh()),
                 'http_code' => 200,
             ];
         } catch (\Throwable $e) {
