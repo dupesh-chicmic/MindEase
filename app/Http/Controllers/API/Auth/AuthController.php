@@ -30,6 +30,7 @@ class AuthController extends Controller
             'success' => true,
             'message' => $result['message'],
             'token' => $result['token'],
+            'user' => $result['user']->resolve(),
         ], $result['http_code'] ?? 201);
     }
 
@@ -51,6 +52,7 @@ class AuthController extends Controller
             'success' => true,
             'message' => $result['message'],
             'token' => $result['token'],
+            'user' => $result['user']->resolve(),
         ], $result['http_code'] ?? 200);
     }
 
