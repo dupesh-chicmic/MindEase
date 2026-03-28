@@ -1,37 +1,35 @@
 <?php
 
-namespace App\Http\Controllers\API\Auth;
+namespace App\Http\Controllers\API\Insight;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\UpdateProfileRequest;
-use App\Services\Auth\ProfileService;
+use App\Services\Insight\InsightService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
-class ProfileController extends Controller
+class InsightController extends Controller
 {
     public function __construct(
-        protected ProfileService $profileService
+        protected InsightService $insightService
     ) {}
 
-    public function update(UpdateProfileRequest $request): JsonResponse
+    public function index(): JsonResponse
     {
-        $result = $this->profileService->updateProfile(
-            Auth::guard('api')->user(),
-            $request->validated()
-        );
+        $userId = Auth::guard('api')->id();
+        $result = $this->insightService->getInsights($userId);
 
         if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
+                'data'    => new \stdClass,
             ], $result['http_code'] ?? 500);
         }
 
         return response()->json([
             'success' => true,
             'message' => $result['message'],
-            'data' => $result['data'],
+            'data'    => $result['data'],
         ], $result['http_code'] ?? 200);
     }
 }
