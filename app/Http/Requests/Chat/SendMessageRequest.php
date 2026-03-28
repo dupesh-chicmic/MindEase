@@ -20,7 +20,7 @@ class SendMessageRequest extends FormRequest
     {
         return [
             'thread_id' => ['required', 'integer', 'exists:chat_threads,id'],
-            'message'   => ['required', 'string', 'max:5000'],
+            'message' => ['required', 'string', 'max:5000'],
         ];
     }
 

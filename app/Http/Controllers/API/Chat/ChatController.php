@@ -24,20 +24,20 @@ class ChatController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
-                'data'    => new \stdClass,
+                'data' => new \stdClass,
             ], $result['http_code'] ?? 500);
         }
 
         return response()->json([
             'success' => true,
             'message' => $result['message'],
-            'data'    => $result['data'],
+            'data' => $result['data'],
         ], $result['http_code'] ?? 201);
     }
 
     public function sendMessage(SendMessageRequest $request): JsonResponse
     {
-        $userId   = Auth::guard('api')->id();
+        $userId = Auth::guard('api')->id();
         $validated = $request->validated();
 
         $result = $this->chatService->handleSendMessage(
@@ -50,20 +50,20 @@ class ChatController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
-                'data'    => new \stdClass,
+                'data' => new \stdClass,
             ], $result['http_code'] ?? 500);
         }
 
         return response()->json([
             'success' => true,
             'message' => $result['message'],
-            'data'    => $result['data'],
+            'data' => $result['data'],
         ], $result['http_code'] ?? 200);
     }
 
     public function getHistory(GetHistoryRequest $request): JsonResponse
     {
-        $userId   = Auth::guard('api')->id();
+        $userId = Auth::guard('api')->id();
         $threadId = (int) $request->input('thread_id');
 
         $result = $this->chatService->getHistory($userId, $threadId);
@@ -72,14 +72,14 @@ class ChatController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
-                'data'    => new \stdClass,
+                'data' => new \stdClass,
             ], $result['http_code'] ?? 500);
         }
 
         return response()->json([
             'success' => true,
             'message' => $result['message'],
-            'data'    => $result['data'],
+            'data' => $result['data'],
         ], $result['http_code'] ?? 200);
     }
 
@@ -92,14 +92,14 @@ class ChatController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
-                'data'    => new \stdClass,
+                'data' => new \stdClass,
             ], $result['http_code'] ?? 500);
         }
 
         return response()->json([
             'success' => true,
             'message' => $result['message'],
-            'data'    => $result['data'],
+            'data' => $result['data'],
         ], $result['http_code'] ?? 200);
     }
 
@@ -112,14 +112,14 @@ class ChatController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
-                'data'    => new \stdClass,
+                'data' => new \stdClass,
             ], $result['http_code'] ?? 500);
         }
 
         return response()->json([
             'success' => true,
             'message' => $result['message'],
-            'data'    => $result['data'],
+            'data' => $result['data'],
         ], $result['http_code'] ?? 200);
     }
 }

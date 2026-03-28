@@ -21,17 +21,17 @@ class ChatService
             $thread = ChatThread::create(['user_id' => $userId]);
 
             return [
-                'success'   => true,
-                'message'   => 'Thread created successfully',
-                'data'      => $thread,
+                'success' => true,
+                'message' => 'Thread created successfully',
+                'data' => $thread,
                 'http_code' => 201,
             ];
         } catch (\Throwable $e) {
             report($e);
 
             return [
-                'success'   => false,
-                'message'   => 'Failed to create thread',
+                'success' => false,
+                'message' => 'Failed to create thread',
                 'http_code' => 500,
             ];
         }
@@ -40,43 +40,38 @@ class ChatService
     public function handleSendMessage(int $userId, int $threadId, string $message): array
     {
         try {
-            // 1. Save user message
             $userMessage = ChatMessage::create([
                 'thread_id' => $threadId,
-                'message'   => $message,
-                'sender'    => 'user',
+                'message' => $message,
+                'sender' => 'user',
             ]);
 
-            // 2. Fetch context (last N messages before this one)
             $contextMessages = $this->fetchContextMessages($threadId, excludeId: $userMessage->id);
-
-            // 3. Generate AI response
             $aiResponse = $this->generateAIResponse($contextMessages, $message);
 
             if (! $aiResponse['success']) {
                 return [
-                    'success'   => false,
-                    'message'   => $aiResponse['message'],
-                    'data'      => [
+                    'success' => false,
+                    'message' => $aiResponse['message'],
+                    'data' => [
                         'user_message' => $userMessage,
                     ],
                     'http_code' => $aiResponse['http_code'],
                 ];
             }
 
-            // 4. Save AI response
             $aiMessage = ChatMessage::create([
                 'thread_id' => $threadId,
-                'message'   => $aiResponse['text'],
-                'sender'    => 'ai',
+                'message' => $aiResponse['message'],
+                'sender' => 'ai',
             ]);
 
             return [
-                'success'   => true,
-                'message'   => 'Message sent successfully',
-                'data'      => [
+                'success' => true,
+                'message' => 'Message sent successfully',
+                'data' => [
                     'user_message' => $userMessage,
-                    'ai_message'   => $aiMessage,
+                    'ai_message' => $aiMessage,
                 ],
                 'http_code' => 200,
             ];
@@ -84,16 +79,14 @@ class ChatService
             report($e);
 
             return [
-                'success'   => false,
-                'message'   => 'Failed to send message',
+                'success' => false,
+                'message' => 'Failed to send message',
                 'http_code' => 500,
             ];
         }
     }
 
     /**
-     * Fetch the last N messages from the thread for context, optionally excluding a specific message ID.
-     *
      * @return array<int, array{role: string, content: string}>
      */
     public function fetchContextMessages(int $threadId, ?int $excludeId = null): array
@@ -109,7 +102,7 @@ class ChatService
         $messages = $query->get()->reverse()->values();
 
         return $messages->map(fn (ChatMessage $msg) => [
-            'role'    => $msg->sender === 'user' ? 'user' : 'assistant',
+            'role' => $msg->sender === 'user' ? 'user' : 'assistant',
             'content' => $msg->message,
         ])->toArray();
     }
@@ -120,13 +113,23 @@ class ChatService
      */
     public function generateAIResponse(array $contextMessages, string $newUserMessage): array
     {
-        $messages   = $contextMessages;
+        $messages = $contextMessages;
         $messages[] = ['role' => 'user', 'content' => $newUserMessage];
 
-        return $this->ai->generateResponse($messages, [
-            'system'     => self::SYSTEM_PROMPT,
+        $response = $this->ai->generateResponse($messages, [
+            'system' => self::SYSTEM_PROMPT,
             'max_tokens' => 1024,
         ]);
+
+        if (! $response['success']) {
+            return $response;
+        }
+
+        return [
+            'success' => true,
+            'message' => $response['text'] ?? '',
+            'http_code' => $response['http_code'],
+        ];
     }
 
     public function getHistory(int $userId, int $threadId): array
@@ -138,8 +141,8 @@ class ChatService
 
             if (! $thread) {
                 return [
-                    'success'   => false,
-                    'message'   => 'Thread not found',
+                    'success' => false,
+                    'message' => 'Thread not found',
                     'http_code' => 404,
                 ];
             }
@@ -149,17 +152,17 @@ class ChatService
                 ->get();
 
             return [
-                'success'   => true,
-                'message'   => 'History retrieved successfully',
-                'data'      => $messages,
+                'success' => true,
+                'message' => 'History retrieved successfully',
+                'data' => $messages,
                 'http_code' => 200,
             ];
         } catch (\Throwable $e) {
             report($e);
 
             return [
-                'success'   => false,
-                'message'   => 'Failed to retrieve history',
+                'success' => false,
+                'message' => 'Failed to retrieve history',
                 'http_code' => 500,
             ];
         }
@@ -173,17 +176,17 @@ class ChatService
                 ->get();
 
             return [
-                'success'   => true,
-                'message'   => 'Threads retrieved successfully',
-                'data'      => $threads,
+                'success' => true,
+                'message' => 'Threads retrieved successfully',
+                'data' => $threads,
                 'http_code' => 200,
             ];
         } catch (\Throwable $e) {
             report($e);
 
             return [
-                'success'   => false,
-                'message'   => 'Failed to retrieve threads',
+                'success' => false,
+                'message' => 'Failed to retrieve threads',
                 'http_code' => 500,
             ];
         }
@@ -198,8 +201,8 @@ class ChatService
 
             if (! $thread) {
                 return [
-                    'success'   => false,
-                    'message'   => 'Thread not found',
+                    'success' => false,
+                    'message' => 'Thread not found',
                     'http_code' => 404,
                 ];
             }
@@ -207,17 +210,17 @@ class ChatService
             $thread->delete();
 
             return [
-                'success'   => true,
-                'message'   => 'Thread deleted successfully',
-                'data'      => new \stdClass,
+                'success' => true,
+                'message' => 'Thread deleted successfully',
+                'data' => new \stdClass,
                 'http_code' => 200,
             ];
         } catch (\Throwable $e) {
             report($e);
 
             return [
-                'success'   => false,
-                'message'   => 'Failed to delete thread',
+                'success' => false,
+                'message' => 'Failed to delete thread',
                 'http_code' => 500,
             ];
         }
