@@ -4,6 +4,7 @@ use App\Http\Controllers\API\Auth\AuthController;
 use App\Http\Controllers\API\Auth\ForgotPasswordController;
 use App\Http\Controllers\API\Auth\ProfileController;
 use App\Http\Controllers\API\Chat\ChatController;
+use App\Http\Controllers\API\Insight\InsightController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/auth')->group(function () {
@@ -27,4 +28,8 @@ Route::prefix('v1/chat')->middleware('session.token')->group(function () {
     Route::get('history', [ChatController::class, 'getHistory']);
     Route::get('threads', [ChatController::class, 'getThreads']);
     Route::delete('thread/{id}', [ChatController::class, 'deleteThread']);
+});
+
+Route::prefix('v1')->middleware('session.token')->group(function () {
+    Route::get('insights', [InsightController::class, 'index']);
 });
